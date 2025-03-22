@@ -22,7 +22,7 @@ onMounted(async () => {
   try {
     isFFmpegLoading.value = true
     ffmpeg.value = createFFmpeg({
-      corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js',
+      corePath: '/ffmpeg/ffmpeg-core.js',
       log: true
     })
     await ffmpeg.value.load()
