@@ -338,7 +338,8 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
 
 <template>
   <div class="video-splitter-container">
-    <h1 class="app-title">SplitVideo.online</h1>
+    <h1 class="app-title">FreeVideoSplitter.org</h1>
+    <p class="app-subtitle">Split Video Into Multiple Parts. 100% Online 100% Free.</p>
     <div class="video-uploader">
       <div class="upload-section" v-if="!videoUrl">
         <input type="file" accept="video/*" @change="handleFileUpload" class="file-input" id="video-upload" />
@@ -490,8 +491,16 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
   font-size: 2rem;
   font-weight: 600;
   color: var(--primary-color);
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
   font-family: monospace;
+}
+
+.app-subtitle {
+  text-align: center;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  opacity: 0.8;
 }
 
 .video-uploader {
