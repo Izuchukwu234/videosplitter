@@ -31,6 +31,25 @@ body {
   width: 100vw;
 }
 
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  #app {
+    padding: 0.5rem;
+  }
+  .full-width {
+    padding: 0 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  #app {
+    padding: 0.25rem;
+  }
+  .full-width {
+    padding: 0 0.25rem;
+  }
+}
+
 main {
   width: 100%;
   display: flex;

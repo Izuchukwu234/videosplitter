@@ -943,4 +943,156 @@ tr:hover td {
 .retry-button:hover {
   background: #dc2626;
 }
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .video-splitter-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .app-title {
+    font-size: 1.5rem;
+  }
+
+  .app-subtitle {
+    font-size: 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .upload-section {
+    padding: 1.5rem;
+    margin: 0.5rem;
+  }
+
+  .video-container {
+    padding: 0.5rem;
+  }
+
+  .video-element {
+    width: 100%;
+    max-height: none;
+  }
+
+  .timeline-container {
+    padding: 1rem;
+    margin-top: 2rem;
+  }
+
+  .timeline {
+    padding: 1rem 0;
+  }
+
+  .timeline-header {
+    padding: 0;
+  }
+
+  .time-label {
+    font-size: 0.9rem;
+  }
+
+  .thumbnails-track {
+    height: 40px;
+  }
+
+  .thumbnail {
+    height: 40px;
+    width: 71px; /* Maintaining 16:9 ratio */
+    transform: translateX(-35.5px);
+  }
+
+  .playhead {
+    height: calc(90% - 10px);
+    top: 5%;
+  }
+
+  .scissors-button {
+    width: 20px;
+    height: 20px;
+    right: -20px;
+  }
+
+  .scissors-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .split-point {
+    width: 3px;
+  }
+
+  .markers {
+    display: none; /* Hide time markers on mobile for cleaner look */
+  }
+
+  /* Table Responsive */
+  .clips-table {
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 100%;
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    padding: 8px 12px;
+  }
+
+  .progress-container {
+    min-width: 120px;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .play-button, .generate-clips-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .play-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .video-splitter-container {
+    padding: 1rem 0.25rem;
+  }
+
+  .app-title {
+    font-size: 1.2rem;
+  }
+
+  .app-subtitle {
+    font-size: 0.9rem;
+    padding: 0 0.25rem;
+  }
+
+  .upload-section {
+    padding: 1rem;
+    margin: 0.25rem;
+  }
+
+  .timeline-container {
+    padding: 0.5rem;
+  }
+
+  .time-label {
+    font-size: 0.8rem;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+
+  th, td {
+    padding: 6px 8px;
+  }
+}
 </style>
