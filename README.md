@@ -1,6 +1,11 @@
-# split-video
+# SplitVideo.Online Source Code
 
-This template should help get you started developing with Vue 3 in Vite.
+Split videos online. 
+All done in your local browser
+
+Find working version here : https://splitvideo.online
+
+
 
 ## Recommended IDE Setup
 
