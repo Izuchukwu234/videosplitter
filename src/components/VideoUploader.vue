@@ -179,12 +179,20 @@ const removeSplitPoint = (time) => {
   splitPoints.value = splitPoints.value.filter(t => t !== time)
 }
 
+const resetSplitPoints = () => {
+  splitPoints.value = []
+}
+
+const refreshPage = () => {
+  window.location.href = window.location.href
+}
+
 const autoTrim = () => {
   if (!videoFile.value || !videoDuration.value) return
-  
+
   // Clear existing split points
   splitPoints.value = []
-  
+
   // Add split points at regular intervals
   let currentTime = autoTrimInterval.value
   while (currentTime < videoDuration.value) {
@@ -422,41 +430,40 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
       </div>
       <div class="controls">
         <div class="controls-row">
-          <button class="play-button" @click="togglePlay">
-            <svg v-if="!isPlaying" class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none" />
-            </svg>
-            <svg v-else class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" />
-              <rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
+          <div class="buttons-group">
+            <button class="play-button" @click="togglePlay">
+              <svg v-if="!isPlaying" class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none" />
+              </svg>
+              <svg v-else class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" />
+                <rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+            <button class="reset-button" @click="resetSplitPoints" :disabled="!splitPoints.length"
+              title="Reset all split points">
+              <img src="/delete.svg" alt="Reset" class="reset-icon">
+            </button>
+            <button class="delete-button" @click="refreshPage" title="Clear all and refresh">
+              <img src="/reset.svg" alt="Clear all" class="delete-icon">
+            </button>
+          </div>
           <div class="auto-trim-container">
             <span class="auto-trim-label">Auto Trim Every:</span>
-            <input 
-              type="number" 
-              v-model="autoTrimInterval" 
-              class="auto-trim-input" 
-              min="1" 
-              max="3600"
-            >
+            <input type="number" v-model="autoTrimInterval" class="auto-trim-input" min="1" max="3600">
             <span class="auto-trim-unit">seconds</span>
-            <button 
-              class="auto-trim-button" 
-              @click="autoTrim"
-              :disabled="!videoFile || !videoDuration"
-            >
-              Auto Trim
+            <button class="auto-trim-button" @click="autoTrim" :disabled="!videoFile || !videoDuration">
+              Auto Add Split Points
             </button>
+            <p class="manual-split-note">
+              You can add split points manually by clicking on the timeline too.
+            </p>
           </div>
         </div>
         <div class="controls-row">
-          <button 
-            class="generate-clips-button" 
-            @click="generateClips"
-            :disabled="clips.length <= 1 || isGenerating || !isFFmpegReady || isFFmpegLoading"
-          >
+          <button class="generate-clips-button" @click="generateClips"
+            :disabled="clips.length <= 1 || isGenerating || !isFFmpegReady || isFFmpegLoading">
             <template v-if="isFFmpegLoading">Loading FFmpeg...</template>
             <template v-else-if="isGenerating">Generating Clips...</template>
             <template v-else>Generate Clips</template>
@@ -470,15 +477,15 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
           <thead>
             <tr>
               <th>Clip</th>
-              <th>Start Time</th>
-              <th>End Time</th>
+              <th>Start</th>
+              <th>End</th>
               <th>Duration</th>
               <th>Download</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="clip in clips" :key="clip.number">
-              <td>Clip #{{ clip.number }}</td>
+              <td>#{{ clip.number }}</td>
               <td>{{ clip.startTimeFormatted }}</td>
               <td>{{ clip.endTimeFormatted }}</td>
               <td>{{ clip.durationFormatted }}</td>
@@ -517,7 +524,7 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
     </div>
   </div>
   <footer class="footer">
-    With ❤️ From Kochi
+    With ❤️ From Kerala
   </footer>
 </template>
 
@@ -631,7 +638,7 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
   max-width: 1920px;
   margin: 0 auto;
   position: relative;
-  padding: 2rem 0;
+  padding: 1rem 0;
   cursor: pointer;
   user-select: none;
 }
@@ -818,64 +825,130 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
 
 .controls-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 1rem;
-  justify-content: flex-start;
+}
+
+.buttons-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.controls-row .play-button,
+.controls-row .reset-button {
+  flex-shrink: 0;
 }
 
 .auto-trim-container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #f8fafc;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
+  gap: 1rem;
+  background: #ffffff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .auto-trim-label {
-  color: #475569;
-  font-size: 0.9rem;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .auto-trim-input {
-  width: 60px;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  width: 70px;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
   text-align: center;
-}
-
-.auto-trim-unit {
-  color: #475569;
-  font-size: 0.9rem;
-}
-
-.auto-trim-button {
-  background-color: #f1f5f9;
-  color: #1e293b;
-  border: 1px solid #cbd5e1;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
+  background: #f8fafc;
   transition: all 0.2s ease;
 }
 
+.auto-trim-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.auto-trim-unit {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.auto-trim-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
 .auto-trim-button:hover {
-  background-color: #e2e8f0;
+  background-color: #2563eb;
+  transform: translateY(-1px);
 }
 
 .auto-trim-button:disabled {
-  background-color: #f1f5f9;
-  color: #94a3b8;
+  background-color: #94a3b8;
   cursor: not-allowed;
+  transform: none;
 }
 
-.play-button {
+.manual-split-note {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0.5rem 0 0;
+  text-align: center;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .auto-trim-container {
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .auto-trim-button {
+    width: 100%;
+    padding: 0.75rem;
+  }
+
+  .generate-clips-button {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+    min-height: 56px;
+  }
+
+  .controls-row:last-child {
+    width: 100%;
+    padding: 0 1rem;
+  }
+}
+
+.play-button,
+.reset-button,
+.delete-button {
   background-color: var(--primary-color);
   color: white;
   width: 48px;
@@ -890,29 +963,54 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
-.play-button:hover {
+.play-button:hover,
+.reset-button:hover,
+.delete-button:hover {
   background-color: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
 }
 
-.play-icon {
-  width: 24px;
-  height: 24px;
+.delete-button {
+  background-color: #ef4444;
+}
+
+.delete-button:hover {
+  background-color: #dc2626;
+}
+
+.reset-button {
+  background-color: #475569;
+}
+
+.reset-button:hover {
+  background-color: #334155;
+}
+
+.reset-button:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .generate-clips-button {
   background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 1rem 1.5rem;
-  border-radius: 9999px;
-  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-  min-width: 160px;
-  position: relative;
+  min-width: 200px;
+}
+
+.generate-clips-button:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
 }
 
 .generate-clips-button:disabled {
@@ -1053,8 +1151,21 @@ tr:hover td {
   font-size: 0.9rem;
 }
 
+.manual-split-note {
+  width: 100%;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
+  .auto-trim-container {
+    border-radius: 8px;
+  }
+
   .video-splitter-container {
     padding: 1rem 0.5rem;
   }
@@ -1224,5 +1335,152 @@ tr:hover td {
 
 .play-button {
   align-self: center;
+}
+
+.play-icon,
+.reset-icon,
+.delete-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.clips-table {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #64748b;
+}
+
+td {
+  color: #334155;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: #f8fafc;
+}
+
+.status-cell {
+  width: 150px;
+  min-width: 150px;
+}
+
+.progress-container {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--primary-color);
+  transition: width 0.2s ease;
+}
+
+.progress-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.status-text {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.download-button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-button:hover {
+  background: #2563eb;
+}
+
+.error-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 14px;
+}
+
+.retry-button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #dc2626;
+}
+
+.footer {
+  text-align: center;
+  padding: 1rem;
+  margin-top: 2rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.manual-split-note {
+  width: 100%;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
 }
 </style>
