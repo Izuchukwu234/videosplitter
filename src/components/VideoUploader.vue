@@ -17,6 +17,7 @@ const ffmpeg = ref(null)
 const isFFmpegReady = ref(false)
 const isFFmpegLoading = ref(false)
 const THUMBNAIL_COUNT = 20
+const autoTrimInterval = ref(30) // Default 30 seconds
 
 onMounted(async () => {
   try {
@@ -176,6 +177,20 @@ const addSplitPoint = () => {
 
 const removeSplitPoint = (time) => {
   splitPoints.value = splitPoints.value.filter(t => t !== time)
+}
+
+const autoTrim = () => {
+  if (!videoFile.value || !videoDuration.value) return
+  
+  // Clear existing split points
+  splitPoints.value = []
+  
+  // Add split points at regular intervals
+  let currentTime = autoTrimInterval.value
+  while (currentTime < videoDuration.value) {
+    splitPoints.value.push(currentTime)
+    currentTime += autoTrimInterval.value
+  }
 }
 
 const clips = computed(() => {
@@ -406,28 +421,47 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
         </div>
       </div>
       <div class="controls">
-        <button class="play-button" @click="togglePlay">
-          <svg v-if="!isPlaying" class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none" />
-          </svg>
-          <svg v-else class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" />
-            <rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" />
-          </svg>
-        </button>
-        <button class="generate-clips-button" @click="generateClips"
-          :disabled="clips.length <= 1 || isGenerating || !isFFmpegReady || isFFmpegLoading">
-          <template v-if="isFFmpegLoading">
-            Loading FFmpeg...
-          </template>
-          <template v-else-if="isGenerating">
-            Generating Clips...
-          </template>
-          <template v-else>
-            Generate Clips
-          </template>
-        </button>
+        <div class="controls-row">
+          <button class="play-button" @click="togglePlay">
+            <svg v-if="!isPlaying" class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none" />
+            </svg>
+            <svg v-else class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" />
+              <rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          <div class="auto-trim-container">
+            <span class="auto-trim-label">Auto Trim Every:</span>
+            <input 
+              type="number" 
+              v-model="autoTrimInterval" 
+              class="auto-trim-input" 
+              min="1" 
+              max="3600"
+            >
+            <span class="auto-trim-unit">seconds</span>
+            <button 
+              class="auto-trim-button" 
+              @click="autoTrim"
+              :disabled="!videoFile || !videoDuration"
+            >
+              Auto Trim
+            </button>
+          </div>
+        </div>
+        <div class="controls-row">
+          <button 
+            class="generate-clips-button" 
+            @click="generateClips"
+            :disabled="clips.length <= 1 || isGenerating || !isFFmpegReady || isFFmpegLoading"
+          >
+            <template v-if="isFFmpegLoading">Loading FFmpeg...</template>
+            <template v-else-if="isGenerating">Generating Clips...</template>
+            <template v-else>Generate Clips</template>
+          </button>
+        </div>
       </div>
 
       <!-- Clips Table -->
@@ -777,10 +811,68 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
 
 .controls {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.controls-row {
+  display: flex;
   align-items: center;
   gap: 1rem;
-  margin-top: 1.5rem;
+  justify-content: flex-start;
+}
+
+.auto-trim-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+}
+
+.auto-trim-label {
+  color: #475569;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.auto-trim-input {
+  width: 60px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.auto-trim-unit {
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.auto-trim-button {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auto-trim-button:hover {
+  background-color: #e2e8f0;
+}
+
+.auto-trim-button:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .play-button {
@@ -813,7 +905,7 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
   background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.5rem;
   border-radius: 9999px;
   font-weight: 600;
   cursor: pointer;
@@ -1013,7 +1105,8 @@ tr:hover td {
 
   .thumbnail {
     height: 40px;
-    width: 71px; /* Maintaining 16:9 ratio */
+    width: 71px;
+    /* Maintaining 16:9 ratio */
     transform: translateX(-35.5px);
   }
 
@@ -1038,7 +1131,8 @@ tr:hover td {
   }
 
   .markers {
-    display: none; /* Hide time markers on mobile for cleaner look */
+    display: none;
+    /* Hide time markers on mobile for cleaner look */
   }
 
   /* Table Responsive */
@@ -1052,7 +1146,8 @@ tr:hover td {
     font-size: 0.9rem;
   }
 
-  th, td {
+  th,
+  td {
     padding: 8px 12px;
   }
 
@@ -1065,7 +1160,8 @@ tr:hover td {
     gap: 0.5rem;
   }
 
-  .play-button, .generate-clips-button {
+  .play-button,
+  .generate-clips-button {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
   }
@@ -1108,8 +1204,25 @@ tr:hover td {
     font-size: 0.8rem;
   }
 
-  th, td {
+  th,
+  td {
     padding: 6px 8px;
   }
+}
+
+.controls-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.auto-trim-container {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.play-button {
+  align-self: center;
 }
 </style>
