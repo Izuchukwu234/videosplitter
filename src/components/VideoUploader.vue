@@ -205,6 +205,12 @@ const clips = computed(() => {
 const generateClips = async () => {
   if (!ffmpeg.value || !videoFile.value || !isFFmpegReady.value) return
 
+  try {
+    Lit.event("generate");
+  } catch (error) {
+    console.error('Error tracking generate event:', error);
+  }
+
   isGenerating.value = true
 
   // Initialize status for each clip
@@ -476,6 +482,9 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
       </div>
     </div>
   </div>
+  <footer class="footer">
+    With ❤️ From Kochi
+  </footer>
 </template>
 
 <style scoped>
@@ -942,6 +951,14 @@ tr:hover td {
 
 .retry-button:hover {
   background: #dc2626;
+}
+
+.footer {
+  text-align: center;
+  padding: 1rem;
+  margin-top: 2rem;
+  color: #666;
+  font-size: 0.9rem;
 }
 
 /* Mobile Optimizations */
