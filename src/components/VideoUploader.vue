@@ -368,7 +368,13 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
 <template>
   <div class="video-splitter-container">
     <h1 class="app-title">FreeVideoSplitter.org</h1>
-    <p class="app-subtitle">Split Video Into Multiple Parts. 100% Online 100% Free.</p>
+    <p class="app-subtitle">Split Video 100% In Your Device (No uploads). No Ads. 100% Free.</p>
+    <div class="ffmpeg-status" :class="{ 'loading': isFFmpegLoading, 'ready': isFFmpegReady }">
+      <div class="status-dot"></div>
+      <span v-if="isFFmpegLoading">Downloading an essential file to split your video (you only have to do this once)</span>
+      <span v-else-if="isFFmpegReady">Essential Files Are Downloaded. Ready to Split Your Video.</span>
+      <span v-else>FFmpeg not loaded</span>
+    </div>
     <div class="video-uploader">
       <div class="upload-section" v-if="!videoUrl">
         <input type="file" accept="video/*" @change="handleFileUpload" class="file-input" id="video-upload" />
@@ -1482,5 +1488,49 @@ tr:hover td {
   font-size: 0.85rem;
   margin: 0.5rem 0 0 0;
   font-style: italic;
+}
+.ffmpeg-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  margin: -1rem auto 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #64748b;
+  max-width: fit-content;
+}
+
+.ffmpeg-status .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
+  transition: background-color 0.3s ease;
+}
+
+.ffmpeg-status.loading .status-dot {
+  background-color: #f59e0b;
+  animation: pulse 1.5s infinite;
+}
+
+.ffmpeg-status.ready .status-dot {
+  background-color: #22c55e;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>
