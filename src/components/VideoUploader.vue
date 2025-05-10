@@ -369,12 +369,6 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
   <div class="video-splitter-container">
     <h1 class="app-title">FreeVideoSplitter.org</h1>
     <p class="app-subtitle">Split Video 100% In Your Device (No uploads). No Ads. 100% Free.</p>
-    <div class="ffmpeg-status" :class="{ 'loading': isFFmpegLoading, 'ready': isFFmpegReady }">
-      <div class="status-dot"></div>
-      <span v-if="isFFmpegLoading">Downloading an essential file to split your video (you only have to do this once)</span>
-      <span v-else-if="isFFmpegReady">Essential Files Are Downloaded. Ready to Split Your Video.</span>
-      <span v-else>FFmpeg not loaded</span>
-    </div>
     <div class="video-uploader">
       <div class="upload-section" v-if="!videoUrl">
         <input type="file" accept="video/*" @change="handleFileUpload" class="file-input" id="video-upload" />
@@ -475,6 +469,14 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
             <template v-else>Generate Clips</template>
           </button>
         </div>
+      </div>
+
+      <!-- FFmpeg Status -->
+      <div class="ffmpeg-status" :class="{ 'loading': isFFmpegLoading, 'ready': isFFmpegReady }">
+        <div class="status-dot"></div>
+        <span v-if="isFFmpegLoading">Downloading an essential file to split your video (you only have to do this once)</span>
+        <span v-else-if="isFFmpegReady">Essential Files Are Downloaded. Ready to Split Your Video.</span>
+        <span v-else>FFmpeg not loaded</span>
       </div>
 
       <!-- Clips Table -->
