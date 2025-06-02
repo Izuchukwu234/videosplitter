@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg'
-import { fetchSplitCount, formatSplitCount } from '../api/functions'
 
 const videoFile = ref(null)
 const videoUrl = ref('')
@@ -17,13 +16,10 @@ const clipStatus = ref(new Map())
 const ffmpeg = ref(null)
 const isFFmpegReady = ref(false)
 const isFFmpegLoading = ref(false)
-const splitCount = ref(null)
 const THUMBNAIL_COUNT = 20
 const autoTrimInterval = ref(30) // Default 30 seconds
 
 onMounted(async () => {
-  // Fetch the split count
-  splitCount.value = await fetchSplitCount()
   try {
     isFFmpegLoading.value = true
     ffmpeg.value = createFFmpeg({
@@ -372,10 +368,7 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
 <template>
   <div class="video-splitter-container">
     <h1 class="app-title">FreeVideoSplitter.org</h1>
-    <div class="header-text">
-        <p class="app-subtitle">Split Video 100% In Your Device (No uploads). No Ads. 100% Free.</p>
-        <p v-if="splitCount" class="app-subtitle split-count">{{ formatSplitCount(splitCount) }} Videos Split So Far</p>
-      </div>
+    <p class="app-subtitle">Split Video 100% In Your Device (No uploads). No Ads. 100% Free.</p>
     <div class="video-uploader">
       <div class="upload-section" v-if="!videoUrl">
         <input type="file" accept="video/*" @change="handleFileUpload" class="file-input" id="video-upload" />
@@ -539,7 +532,7 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
     </div>
   </div>
   <footer class="footer">
-    With ❤️ From Kerala
+    This is an open source project. <a href="https://github.com/abyabraham93/freevideosplitter.org" target="_blank">Get access to 100% Free Source code here</a>
   </footer>
 </template>
 
