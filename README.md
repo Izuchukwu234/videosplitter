@@ -3,7 +3,7 @@
 Split videos online. 
 All done in your local browser
 
-Find working version here : https://splitvideo.online
+Live app : https://freevideosplitter.org
 
 
 
