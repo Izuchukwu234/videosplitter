@@ -228,6 +228,9 @@ const submitFeedback = async () => {
 const closeThankYou = () => {
   showThankYou.value = false
   showCallout.value = false
+  // Apply same logic as "Don't show again"
+  isDismissed.value = true
+  sessionStorage.setItem('feedback-widget-dismissed', 'true')
 }
 
 const dismissWidget = () => {
@@ -652,61 +655,149 @@ const dismissWidget = () => {
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .feedback-widget {
-    bottom: 20px;
-    right: 20px;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    position: fixed;
   }
   
   .feedback-circle {
     width: 52px;
     height: 52px;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
   }
   
   .feedback-callout {
-    width: 350px;
-    max-width: calc(100vw - 40px);
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
   }
   
   .callout-content {
     padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  
+  .callout-text {
+    flex-shrink: 0;
   }
   
   .callout-text h3 {
-    font-size: 16px;
+    font-size: 18px;
+    margin-bottom: 8px;
   }
   
   .callout-text p {
-    font-size: 13px;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  
+  .feedback-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-group:last-of-type {
+    margin-bottom: 0;
+  }
+  
+  .form-label {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  
+  .form-textarea {
+    min-height: 60px;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .form-input {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .star-rating {
+    gap: 8px;
   }
   
   .tooltip-message {
     max-width: 200px;
     font-size: 13px;
     padding: 10px 14px;
+    right: 20px;
+    bottom: 80px;
   }
   
   .form-actions {
     flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+    flex-shrink: 0;
   }
   
   .submit-btn, .cancel-btn {
     width: 100%;
+    padding: 14px 20px;
+  }
+  
+  .dismiss-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    flex-shrink: 0;
+  }
+  
+  .dismiss-btn {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+  
+  .close-btn {
+    top: 20px;
+    right: 20px;
+    width: 36px;
+    height: 36px;
   }
 }
 
 @media (max-width: 480px) {
-  .feedback-widget {
+  .feedback-circle {
+    width: 48px;
+    height: 48px;
     bottom: 16px;
     right: 16px;
   }
   
-  .feedback-circle {
-    width: 48px;
-    height: 48px;
+  .callout-content {
+    padding: 16px;
   }
   
-  .feedback-callout {
-    width: 260px;
-    max-width: calc(100vw - 32px);
+  .tooltip-message {
+    right: 16px;
+    bottom: 72px;
   }
 }
 </style>
