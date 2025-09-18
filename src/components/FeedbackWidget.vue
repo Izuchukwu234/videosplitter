@@ -45,10 +45,82 @@
           <p>Share your thoughts and help us make this tool even better for everyone!</p>
         </div>
         
-        <div class="callout-actions">
-          <button class="feedback-btn" @click="openFeedbackForm">
-            Share Feedback
-          </button>
+        <!-- Thank You Message -->
+        <div v-if="showThankYou" class="thank-you-message">
+          <div class="thank-you-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>Thank you for your feedback!</h3>
+          <p>We really appreciate you taking the time to help us improve. Your input helps us make this tool better for everyone!</p>
+          <button class="close-thank-you-btn" @click="closeThankYou">Close</button>
+        </div>
+
+        <!-- Feedback Form -->
+        <form v-else @submit.prevent="submitFeedback" class="feedback-form">
+          <!-- Star Rating -->
+          <div class="form-group">
+            <label class="form-label">How would you rate the current app? <span class="required">*</span></label>
+            <div class="star-rating">
+              <button 
+                v-for="star in 5" 
+                :key="star"
+                type="button"
+                class="star"
+                :class="{ active: star <= rating }"
+                @click="setRating(star)"
+                @mouseenter="hoverRating = star"
+                @mouseleave="hoverRating = 0"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" 
+                    :fill="(star <= rating || star <= hoverRating) ? '#fbbf24' : 'none'" 
+                    :stroke="(star <= rating || star <= hoverRating) ? '#fbbf24' : '#d1d5db'" 
+                    stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Feedback Textarea -->
+          <div class="form-group">
+            <label class="form-label" for="feedback">Your feedback / suggestions <span class="required">*</span></label>
+            <textarea 
+              id="feedback"
+              v-model="feedbackText"
+              class="form-textarea"
+              rows="4"
+              placeholder="Tell us what you think about the app, any issues you faced, or features you'd like to see..."
+              required
+            ></textarea>
+          </div>
+
+          <!-- Email Input -->
+          <div class="form-group">
+            <label class="form-label" for="email">Your Email Address (optional - to alert you when we implement changes)</label>
+            <input 
+              id="email"
+              v-model="email"
+              type="email"
+              class="form-input"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="submit" class="submit-btn" :disabled="!isFormValid || isSubmitting">
+              <span v-if="isSubmitting">Submitting...</span>
+              <span v-else>Submit →</span>
+            </button>
+            <button type="button" class="cancel-btn" @click="closeCallout">
+              Cancel
+            </button>
+          </div>
+        </form>
+        
+        <div class="dismiss-section">
           <button class="dismiss-btn" @click="dismissWidget">
             Don't show again
           </button>
@@ -59,11 +131,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const showCallout = ref(false)
 const isDismissed = ref(false)
 const showTooltip = ref(false)
+const showThankYou = ref(false)
+
+// Form data
+const rating = ref(0)
+const hoverRating = ref(0)
+const feedbackText = ref('')
+const email = ref('')
+const isSubmitting = ref(false)
+
+// Form validation
+const isFormValid = computed(() => {
+  return rating.value > 0 && feedbackText.value.trim().length > 0
+})
 
 // Check if user has dismissed the widget in current session
 onMounted(() => {
@@ -93,8 +178,55 @@ const closeCallout = () => {
   showCallout.value = false
 }
 
-const openFeedbackForm = () => {
-  window.open('https://tally.so/r/3yLZvx', '_blank')
+const setRating = (star) => {
+  rating.value = star
+}
+
+const submitFeedback = async () => {
+  if (!isFormValid.value) return
+  
+  isSubmitting.value = true
+  
+  try {
+    // Send feedback to Pabbly webhook
+    const feedbackData = {
+      rating: rating.value,
+      feedback: feedbackText.value,
+      email: email.value,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent
+    }
+    
+    const response = await fetch('https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTY1MDYzMzA0MzI1MjY4NTUzMTUxM2Ei_pc', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData)
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to submit feedback')
+    }
+    
+    // Reset form
+    rating.value = 0
+    feedbackText.value = ''
+    email.value = ''
+    
+    // Show thank you message
+    showThankYou.value = true
+    
+  } catch (error) {
+    console.error('Error submitting feedback:', error)
+    alert('Sorry, there was an error submitting your feedback. Please try again.')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const closeThankYou = () => {
+  showThankYou.value = false
   showCallout.value = false
 }
 
@@ -206,10 +338,12 @@ const dismissWidget = () => {
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.08);
-  width: 320px;
+  width: 400px;
   max-width: calc(100vw - 48px);
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 @keyframes slideIn {
@@ -247,6 +381,200 @@ const dismissWidget = () => {
 
 .callout-content {
   padding: 24px;
+}
+
+.feedback-form {
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.star-rating {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.star:hover {
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.submit-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-btn {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.cancel-btn:hover {
+  background: #f8fafc;
+  border-color: #d1d5db;
+}
+
+.dismiss-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  text-align: center;
+}
+
+.thank-you-message {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.thank-you-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: white;
+  animation: successPulse 0.6s ease-out;
+}
+
+.thank-you-message h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.thank-you-message p {
+  margin: 0 0 24px 0;
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.close-thank-you-btn {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.close-thank-you-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .callout-icon {
@@ -334,7 +662,7 @@ const dismissWidget = () => {
   }
   
   .feedback-callout {
-    width: 280px;
+    width: 350px;
     max-width: calc(100vw - 40px);
   }
   
@@ -354,6 +682,14 @@ const dismissWidget = () => {
     max-width: 200px;
     font-size: 13px;
     padding: 10px 14px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .submit-btn, .cancel-btn {
+    width: 100%;
   }
 }
 
