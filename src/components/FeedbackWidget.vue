@@ -94,7 +94,7 @@ const closeCallout = () => {
 }
 
 const openFeedbackForm = () => {
-  window.open('https://tally.so/forms/3yLZvx/share', '_blank')
+  window.open('https://tally.so/r/3yLZvx', '_blank')
   showCallout.value = false
 }
 
