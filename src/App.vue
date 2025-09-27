@@ -1,13 +1,11 @@
 <script setup>
 import VideoUploader from './components/VideoUploader.vue'
-import FeedbackWidget from './components/FeedbackWidget.vue'
 </script>
 
 <template>
   <main>
     <VideoUploader class="full-width" />
   </main>
-  <FeedbackWidget />
 </template>
 
 <style>
