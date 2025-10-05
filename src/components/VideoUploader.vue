@@ -367,8 +367,8 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
 
 <template>
   <div class="video-splitter-container">
-    <h1 class="app-title">FreeVideoSplitter.org</h1>
-    <p class="app-subtitle">Split Video 100% In Your Device (No uploads). No Ads. 100% Free.</p>
+    <h1 class="app-title">KOMI VideoSplitter</h1>
+    <p class="app-subtitle">You can split Video 100% In Your Device (No uploads).</p>
     <div class="video-uploader">
       <div class="upload-section" v-if="!videoUrl">
         <input type="file" accept="video/*" @change="handleFileUpload" class="file-input" id="video-upload" />
@@ -532,7 +532,7 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
     </div>
   </div>
   <footer class="footer">
-    This is an open source project. <a href="https://github.com/abyabraham93/freevideosplitter.org" target="_blank">Get access to 100% Free Source code here</a>
+    This is specifically put together for KOMI Group. A huge credit to <a href="https://github.com/abyabraham93/freevideosplitter.org" target="_blank">abyabraham93</a> for the open source.
   </footer>
 </template>
 
