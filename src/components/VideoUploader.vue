@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg'
+import JSZip from 'jszip' // Import JSZip
 
 const videoFile = ref(null)
 const videoUrl = ref('')
@@ -17,7 +18,10 @@ const ffmpeg = ref(null)
 const isFFmpegReady = ref(false)
 const isFFmpegLoading = ref(false)
 const THUMBNAIL_COUNT = 20
-const autoTrimInterval = ref(30) // Default 30 seconds
+const autoTrimInterval = ref(30)
+
+// Store clips for ZIP download
+const generatedClips = ref([]) // Add this to store clips with blobs
 
 onMounted(async () => {
   try {
@@ -40,6 +44,7 @@ const handleFileUpload = (event) => {
   if (file) {
     videoFile.value = file
     videoUrl.value = URL.createObjectURL(file)
+    generatedClips.value = [] // Reset clips on new upload
   }
 }
 
@@ -202,7 +207,6 @@ const autoTrim = () => {
 }
 
 const clips = computed(() => {
-  // Add video end as the last split point
   const allPoints = [...splitPoints.value, videoDuration.value].sort((a, b) => a - b)
   const result = []
   let startTime = 0
@@ -219,7 +223,7 @@ const clips = computed(() => {
       endTimeFormatted: formatTime(endTime),
       durationFormatted: formatTime(duration)
     })
-    startTime = endTime // Update startTime for next clip
+    startTime = endTime
   }
 
   return result
@@ -235,8 +239,9 @@ const generateClips = async () => {
   }
 
   isGenerating.value = true
+  generatedClips.value = [] // Clear previous clips
 
-  // Initialize status for each clip
+  clipStatus.value.clear()
   clips.value.forEach(clip => {
     clipStatus.value.set(clip.number, {
       progress: 0,
@@ -246,11 +251,9 @@ const generateClips = async () => {
   })
 
   try {
-    // Write input file to FFmpeg's virtual filesystem
     const inputData = await fetchFile(videoFile.value)
     ffmpeg.value.FS('writeFile', 'input', inputData)
 
-    // Process clips sequentially
     for (const clip of clips.value) {
       try {
         console.log(`Processing clip ${clip.number}:`, {
@@ -259,7 +262,6 @@ const generateClips = async () => {
           duration: clip.endTime - clip.startTime
         })
 
-        // Update status to processing
         clipStatus.value.set(clip.number, {
           progress: 0,
           status: 'processing',
@@ -269,7 +271,6 @@ const generateClips = async () => {
         const outputName = `clip_${clip.number}.${videoFile.value.name.split('.').pop()}`
         const duration = clip.endTime - clip.startTime
 
-        // Run FFmpeg command to extract clip
         await ffmpeg.value.run(
           '-ss', clip.startTime.toString(),
           '-i', 'input',
@@ -278,29 +279,24 @@ const generateClips = async () => {
           outputName
         )
 
-        console.log(`FFmpeg command for clip ${clip.number}:`, [
-          '-ss', clip.startTime.toString(),
-          '-i', 'input',
-          '-t', duration.toString(),
-          '-c', 'copy',
-          outputName
-        ])
-
-        // Read the output file
         const data = ffmpeg.value.FS('readFile', outputName)
         const blob = new Blob([data.buffer], { type: videoFile.value.type })
 
-        // Store blob for download
-        clip.blob = blob
+        // Store clip with blob for ZIP
+        generatedClips.value.push({
+          number: clip.number,
+          blob,
+          filename: `clip_${clip.number}_${clip.startTimeFormatted}-${clip.endTimeFormatted}.${videoFile.value.name.split('.').pop()}`
+        })
 
-        // Mark as complete
+        clip.blob = blob // For individual download
+
         clipStatus.value.set(clip.number, {
           progress: 100,
           status: 'complete',
           error: null
         })
 
-        // Clean up output file
         ffmpeg.value.FS('unlink', outputName)
       } catch (error) {
         console.error('Error processing clip:', error)
@@ -312,38 +308,12 @@ const generateClips = async () => {
       }
     }
 
-    // Clean up input file
     ffmpeg.value.FS('unlink', 'input')
   } catch (error) {
     console.error('Error in generate clips:', error)
   } finally {
     isGenerating.value = false
   }
-}
-
-const retryClip = async (clipNumber) => {
-  // Similar to generateClips but for a single clip
-  clipStatus.value.set(clipNumber, {
-    progress: 0,
-    status: 'processing',
-    error: null
-  })
-
-  // Simulate processing for the single clip
-  for (let progress = 0; progress <= 100; progress += 10) {
-    clipStatus.value.set(clipNumber, {
-      progress,
-      status: 'processing',
-      error: null
-    })
-    await new Promise(resolve => setTimeout(resolve, 200))
-  }
-
-  clipStatus.value.set(clipNumber, {
-    progress: 100,
-    status: 'complete',
-    error: null
-  })
 }
 
 const downloadClip = (clip) => {
@@ -355,12 +325,39 @@ const downloadClip = (clip) => {
   a.download = `clip_${clip.number}_${clip.startTimeFormatted}-${clip.endTimeFormatted}.${videoFile.value.name.split('.').pop()}`
   document.body.appendChild(a)
   a.click()
-
-  // Cleanup
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
 
+// New function to download all clips as a ZIP
+const downloadAllClipsAsZip = async () => {
+  if (generatedClips.value.length === 0) return
+
+  const zip = new JSZip()
+
+  // Add each clip to the ZIP
+  generatedClips.value.forEach(clip => {
+    zip.file(clip.filename, clip.blob)
+  })
+
+  // Generate ZIP and trigger download
+  try {
+    const content = await zip.generateAsync({ type: 'blob' })
+    const url = URL.createObjectURL(content)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `video_clips_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Error generating ZIP:', error)
+    alert('Failed to create ZIP file. Please try again.')
+  }
+}
+
+// [Previous event listeners unchanged]
 videoRef.value?.addEventListener('play', handleVideoPlay)
 videoRef.value?.addEventListener('pause', handleVideoPause)
 </script>
@@ -481,6 +478,12 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
 
       <!-- Clips Table -->
       <div class="clips-table" v-if="clips.length > 0">
+        <!-- Download All as ZIP Button -->
+        <div class="download-all-container" v-if="generatedClips.length > 0">
+          <button class="download-all-button" @click="downloadAllClipsAsZip" :disabled="isGenerating">
+            Download All Clips as ZIP
+          </button>
+        </div>
         <table>
           <thead>
             <tr>
@@ -499,24 +502,17 @@ videoRef.value?.addEventListener('pause', handleVideoPause)
               <td>{{ clip.durationFormatted }}</td>
               <td class="status-cell">
                 <template v-if="clipStatus.get(clip.number)">
-                  <!-- Show progress during processing -->
                   <div v-if="clipStatus.get(clip.number).status === 'processing'" class="progress-container">
                     <div class="progress-bar" :style="{ width: clipStatus.get(clip.number).progress + '%' }"></div>
                     <span class="progress-text">{{ clipStatus.get(clip.number).progress }}%</span>
                   </div>
-
-                  <!-- Show waiting status -->
                   <div v-else-if="clipStatus.get(clip.number).status === 'waiting'" class="status-text">
                     Waiting...
                   </div>
-
-                  <!-- Show download button when complete -->
                   <button v-else-if="clipStatus.get(clip.number).status === 'complete'" class="download-button"
                     @click="downloadClip(clip)">
                     Download
                   </button>
-
-                  <!-- Show retry button on error -->
                   <div v-else-if="clipStatus.get(clip.number).status === 'error'" class="error-container">
                     <span class="error-text">Error</span>
                     <button class="retry-button" @click="retryClip(clip.number)">
@@ -1534,5 +1530,35 @@ tr:hover td {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+.download-all-container {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.download-all-button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-all-button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.download-all-button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 </style>
